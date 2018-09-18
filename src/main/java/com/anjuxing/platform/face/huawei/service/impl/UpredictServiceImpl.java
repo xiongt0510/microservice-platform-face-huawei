@@ -6,7 +6,6 @@ import com.anjuxing.platform.face.huawei.service.RedisRepository;
 import com.anjuxing.platform.face.huawei.service.TokenService;
 import com.anjuxing.platform.face.huawei.service.UpredictService;
 import com.anjuxing.platform.face.huawei.util.ImageUtil;
-import com.anjuxing.platform.face.huawei.util.StringUtil;
 import com.cloud.sdk.http.HttpMethodName;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -17,6 +17,8 @@ public class HuaweiProperties {
 
     private ProjectProperties project = new ProjectProperties();
 
+    private String tokenUrl = "https://iam.cn-north-1.myhuaweicloud.com/v3/auth/tokens";
+
     public AccountProperties getAccount() {
         return account;
     }
@@ -47,5 +49,13 @@ public class HuaweiProperties {
 
     public void setProject(ProjectProperties project) {
         this.project = project;
+    }
+
+    public String getTokenUrl() {
+        return tokenUrl;
+    }
+
+    public void setTokenUrl(String tokenUrl) {
+        this.tokenUrl = tokenUrl;
     }
 }

@@ -36,8 +36,8 @@ public class FaceController {
     @GetMapping("/test/compare")
     public String testFaceCompare() throws Exception {
 
-        String url1 = "4a2ce919a3444bb19a000e6abbcea855.jpeg\\\"";
-        String url2 = "4a2ce919a3444bb19a000e6abbcea855.jpeg\\\"_5";
+        String url1 = "4a2ce919a3444bb19a000e6abbcea855.jpeg\"";
+        String url2 = "4a2ce919a3444bb19a000e6abbcea855.jpeg\"_5";
 
 //        String sim =faceCompare(url1,url2);
         Double sim =   faceService.faceCompare(url1,url2);

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
-import java.time.LocalDateTime;
 
 /**
  * @author xiongt
@@ -40,9 +39,9 @@ public class ObjectStoreServiceImpl implements ObjectStoreService {
             key = file.getName();
         }
 
-        File f = new File("C:\\Users\\Administrator\\Pictures\\4a2ce919a3444bb19a000e6abbcea855.jpeg");
+//        File f = new File("C:\\Users\\Administrator\\Pictures\\4a2ce919a3444bb19a000e6abbcea855.jpeg");
 
-        PutObjectResult result =  obsClient.putObject(bucketName,key,f);
+        PutObjectResult result =  obsClient.putObject(bucketName,key,file);
 
         return mapper.convertValue(result,ObjectStoreResult.class);
     }

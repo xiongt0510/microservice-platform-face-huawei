@@ -1,28 +1,25 @@
 package com.anjuxing.platform.face.huawei.service.impl;
 
 import com.anjuxing.platform.face.huawei.properties.HuaweiProperties;
-import com.anjuxing.platform.face.huawei.service.AbstractHttpService;
-import com.anjuxing.platform.face.huawei.service.FaceService;
-import com.anjuxing.platform.face.huawei.service.RedisRepository;
-import com.anjuxing.platform.face.huawei.service.TokenService;
+import com.anjuxing.platform.face.huawei.service.*;
+
+import static  com.anjuxing.platform.face.huawei.service.FaceConstant.*;
 import com.cloud.sdk.http.HttpMethodName;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
-
 import org.apache.http.entity.StringEntity;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -49,8 +46,7 @@ public class FaceServiceImpl extends AbstractHttpService implements FaceService 
     @Autowired
     private RedisRepository redis;
 
-    //{project_id}
-    private static final String FACE_COMPARE_URL = "/v1/%s/face-compare";
+
 
     /**
      * 通过url 图像比对，返回 相似度
@@ -63,31 +59,35 @@ public class FaceServiceImpl extends AbstractHttpService implements FaceService 
 
         String faceCompareUrl =huawei.getCompare().getEndpoint()+
                 String.format(FACE_COMPARE_URL,huawei.getProject().getProjectId());
-
         logger.info("url :" + faceCompareUrl);
 
         String key1 = url1;
         String key2 = url2;
-
         String params = params(key1,key2);
 
         HttpResponse response = super.template(faceCompareUrl, HttpMethodName.POST,params);
-
         String resp = super.httpEntityData(response);
-
         Map<String ,Object> map  = mapper.readValue(resp, Map.class);
 
-        return (Double) map.get("similarity");
+        return (Double) map.get(FACE_COMPARE_RESULT_SIMILARITY);
     }
 
-    private String params(String key1 ,String key2){
+    /**
+     * 获取url 人脸比对的url 参数
+     * @param key1 在
+     * @param key2
+     * @return
+     * @throws JsonProcessingException
+     */
+    private String params(String key1,String key2 ) throws JsonProcessingException {
 
-        String params = "{\"image1_url\":\"%s\",\"image2_url\":\"%s\"}";
-        String url = "/%s/%s";
-        String url1 = String.format(url,huawei.getObs().getBucketName(),key1);
-        String url2 = String.format(url,huawei.getObs().getBucketName(),key2);
+        String url1 = String.format(REQUEST_PARAM_IMAGE_URL,huawei.getObs().getBucketName(),key1);
+        String url2 = String.format(REQUEST_PARAM_IMAGE_URL,huawei.getObs().getBucketName(),key2);
 
-        return String.format(params,url1,url2);
+        Map<String,String> urlMap = new HashMap<>();
+        urlMap.put(PARAM_IMAGE1_URL,url1);
+        urlMap.put(PARAM_IMAGE2_URL,url2);
+        return mapper.writeValueAsString(urlMap);
     }
 
     @Override
@@ -105,7 +105,7 @@ public class FaceServiceImpl extends AbstractHttpService implements FaceService 
         if (StringUtils.isEmpty(redis.getAccessToken())){
             tokenService.getToken();
         }
-        request.addHeader("X-Auth-Token",redis.getAccessToken());
+        request.addHeader(TokenConstant.HEADER_X_AUTH_TOKEN,redis.getAccessToken());
     }
 
 

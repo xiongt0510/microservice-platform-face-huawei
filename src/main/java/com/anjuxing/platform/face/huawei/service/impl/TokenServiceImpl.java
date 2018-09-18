@@ -1,6 +1,11 @@
 package com.anjuxing.platform.face.huawei.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.anjuxing.platform.face.huawei.properties.HuaweiProperties;
 import com.anjuxing.platform.face.huawei.service.RedisRepository;
+import static com.anjuxing.platform.face.huawei.service.TokenConstant.*;
+
 import com.anjuxing.platform.face.huawei.service.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -14,8 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -36,8 +41,8 @@ public class TokenServiceImpl implements TokenService {
     @Autowired
     private ObjectMapper mapper;
 
-    private final String url = "https://iam.cn-north-1.myhuaweicloud.com/v3/auth/tokens";
-
+    @Autowired
+    private HuaweiProperties hw;
 
     @Override
     public String getToken() {
@@ -51,14 +56,14 @@ public class TokenServiceImpl implements TokenService {
 
         logger.info("HttpEntity request body :"+entity.getBody());
 
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(url,entity,String.class);
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(hw.getTokenUrl(),entity,String.class);
         HttpHeaders responseHeaders = responseEntity.getHeaders();
         logger.info("ResponseEntity header : "+ responseEntity.getHeaders());
         logger.info("ResponseEntity body : "+ responseEntity.getBody());
 
         String token = "";
-        if (responseHeaders.containsKey("X-Subject-Token")){
-            List<String> tokens = responseHeaders.get("X-Subject-Token");
+        if (responseHeaders.containsKey(HEADER_X_SUBJECT_TOKEN)){
+            List<String> tokens = responseHeaders.get(HEADER_X_SUBJECT_TOKEN);
             token = tokens.get(0);
         }
         if (StringUtils.isEmpty(token)){
@@ -69,7 +74,7 @@ public class TokenServiceImpl implements TokenService {
 
         String expiresAt = null;
         try {
-            expiresAt = mapper.readTree(responseBody).path("token").path("expires_at").asText();
+            expiresAt = mapper.readTree(responseBody).path(TOKEN).path(EXPIRES_AT).asText();
         } catch (IOException e) {
             throw new  RuntimeException("读取 expires_at 失败");
         }
@@ -84,26 +89,26 @@ public class TokenServiceImpl implements TokenService {
 
 //    {
 //        "auth": {
-//        "identity": {
-//            "methods": [
-//            "password"
-//      ],
-//            "password": {
-//                "user": {
-//                    "name": "anjuxingkeji",
-//                            "password": "anjuxing2015",
-//                            "domain": {
-//                        "name": "anjuxingkeji"
-//                    }
-//                }
-//            }
-//        },
-//        "scope": {
-//            "project": {
-//                "name": "cn-north-1"
-//            }
-//        }
-//    }
+    //        "identity": {
+    //            "methods": [
+    //                  "password"
+    //              ],
+    //            "password": {
+    //                "user": {
+    //                    "name": "anjuxingkeji",
+    //                    "password": "anjuxing2015",
+    //                    "domain": {
+    //                        "name": "anjuxingkeji"
+    //                    }
+    //                }
+    //            }
+    //        },
+    //        "scope": {
+    //            "project": {
+    //                "name": "cn-north-1"
+    //            }
+    //        }
+    //    }
 //    }
     /**
      *
@@ -111,7 +116,48 @@ public class TokenServiceImpl implements TokenService {
      */
     private  String requestBody(){
 
-   String paramJson = "{\"auth\":{\"identity\":{\"methods\":[\"password\"],\"password\":{\"user\":{\"name\": \"anjuxingkeji\",\"password\": \"anjuxing2015\",\"domain\": {\"name\": \"anjuxingkeji\"}}}},\"scope\": {\"project\": {\"name\": \"cn-north-1\"}}}}";
-        return  paramJson;
+        //domain
+        JSONObject domain = new JSONObject();
+        domain.put(REQUEST_JSON_KEY_NAME,hw.getAccount().getUsername());
+
+        //User
+        JSONObject user = new JSONObject();
+        user.put(REQUEST_JSON_KEY_NAME,hw.getAccount().getUsername());
+        user.put(REQUEST_JSON_KEY_PASSWORD,hw.getAccount().getPassword());
+        user.put(REQUEST_JSON_KEY_DOMAIN, domain);
+
+        //methods
+        JSONArray methods = new JSONArray();
+        methods.add(REQUEST_JSON_KEY_PASSWORD);
+
+        //password
+        JSONObject password = new JSONObject();
+        password.put(REQUEST_JSON_KEY_USER,user);
+
+        //identity
+        JSONObject identity = new JSONObject();
+        identity.put(REQUEST_JSON_KEY_METHODS,methods);
+        identity.put(REQUEST_JSON_KEY_PASSWORD,password);
+
+        //scope====
+
+        JSONObject project = new JSONObject();
+        project.put(REQUEST_JSON_KEY_NAME,hw.getProject().getProjectName());
+
+
+        JSONObject scope = new JSONObject();
+        scope.put(REQUEST_JSON_KEY_PROJECT,project);
+        //====
+
+        JSONObject auth = new JSONObject();
+        auth.put(REQUEST_JSON_KEY_IDENTITY,identity);
+        auth.put(REQUEST_JSON_KEY_SCOPE,scope);
+
+        JSONObject data = new JSONObject();
+        data.put(REQUEST_JSON_KEY_AUTH,auth);
+
+
+        return  data.toString();
+
     }
 }
